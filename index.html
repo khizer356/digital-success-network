@@ -1,335 +1,159 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+/* =====================================================
+     LOGIN
+     ===================================================== */
 
-  <title>Digital Success Network</title>
-  <meta name="description" content="Digital Success Network - Team Se Taraqqi Tak">
+  async function loginUser(event) {
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
+    event.preventDefault();
+
+    const email =
+      document.getElementById("loginEmail").value.trim();
+
+    const password =
+      document.getElementById("loginPassword").value;
+
+
+    showMessage(
+      "loginMessage",
+      "Login ho raha hai...",
+      "success"
+    );
+
+
+    const { data, error } =
+      await supabaseClient.auth.signInWithPassword({
+
+        email: email,
+        password: password
+
+      });
+
+
+    if (error) {
+
+      showMessage(
+        "loginMessage",
+        error.message,
+        "error"
+      );
+
+      return;
     }
 
-    body {
-      background: #f5f7fb;
-      color: #172033;
-      line-height: 1.6;
+
+    showMessage(
+      "loginMessage",
+      "Login successful!",
+      "success"
+    );
+
+
+    document.querySelector("#loginModal form").reset();
+
+
+    setTimeout(() => {
+
+      closeModals();
+
+      updateUserUI(data.user);
+
+    }, 800);
+  }
+
+
+  /* =====================================================
+     LOGOUT
+     ===================================================== */
+
+  async function logout() {
+
+    await supabaseClient.auth.signOut();
+
+    document.getElementById("userBox").style.display = "none";
+
+    alert("Logout successful.");
+  }
+
+  /* =====================================================
+     USER UI
+     ===================================================== */
+
+  function updateUserUI(user) {
+
+    const userBox =
+      document.getElementById("userBox");
+
+    const welcomeText =
+      document.getElementById("welcomeText");
+
+
+    if (!user) {
+
+      userBox.style.display = "none";
+
+      return;
     }
 
-    header {
-      background: #0b1f3a;
-      color: white;
-      padding: 18px 6%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+
+    const name =
+      user.user_metadata?.full_name ||
+      user.email ||
+      "Member";
+
+
+    welcomeText.textContent =
+      "Welcome, " + name + " 👋";
+
+
+    userBox.style.display = "block";
+  }
+
+
+  /* =====================================================
+     CHECK LOGIN ON PAGE LOAD
+     ===================================================== */
+
+  async function checkUser() {
+
+    const { data } =
+      await supabaseClient.auth.getSession();
+
+    updateUserUI(data.session?.user || null);
+  }
+
+
+  /* =====================================================
+     AUTH STATE
+     ===================================================== */
+
+  supabaseClient.auth.onAuthStateChange(
+    function(event, session) {
+
+      updateUserUI(session?.user || null);
+
+    }
+  );
+
+
+  /* =====================================================
+     START
+     ===================================================== */
+
+  checkUser();
+
+
+  /* Close modal when clicking outside */
+
+  window.addEventListener("click", function(event) {
+
+    if (event.target.classList.contains("modal")) {
+      closeModals();
+
     }
 
-    .logo {
-      font-size: 22px;
-      font-weight: bold;
-    }
+  });
 
-    nav a {
-      color: white;
-      text-decoration: none;
-      margin-left: 18px;
-      font-size: 14px;
-    }
-
-    .hero {
-      background: linear-gradient(135deg, #0b1f3a, #1464a5);
-      color: white;
-      text-align: center;
-      padding: 90px 20px;
-    }
-
-    .hero h1 {
-      font-size: 42px;
-      margin-bottom: 15px;
-    }
-
-    .hero p {
-      font-size: 19px;
-      margin-bottom: 30px;
-    }
-
-    .buttons {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      display: inline-block;
-      padding: 13px 25px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    .primary {
-      background: white;
-      color: #0b1f3a;
-    }
-
-    .secondary {
-      border: 1px solid white;
-      color: white;
-    }
-
-    section {
-      padding: 65px 7%;
-    }
-
-    .section-title {
-      text-align: center;
-      margin-bottom: 35px;
-    }
-
-    .section-title h2 {
-      font-size: 30px;
-      margin-bottom: 8px;
-    }
-
-    .section-title p {
-      color: #667085;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-    }
-
-    .card {
-      background: white;
-      padding: 28px 22px;
-      border-radius: 14px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.07);
-    }
-
-    .card h3 {
-      margin-bottom: 10px;
-      color: #0b1f3a;
-    }
-
-    .coming {
-      background: #eef4ff;
-      text-align: center;
-    }
-
-    .coming-box {
-      max-width: 700px;
-      margin: auto;
-      background: white;
-      padding: 40px 25px;
-      border-radius: 15px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.06);
-    }
-
-    .badge {
-      display: inline-block;
-      background: #0b1f3a;
-      color: white;
-      padding: 7px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      margin-bottom: 15px;
-    }
-
-    .cta {
-      background: #0b1f3a;
-      color: white;
-      text-align: center;
-    }
-
-    .cta h2 {
-      font-size: 30px;
-      margin-bottom: 15px;
-    }
-
-    footer {
-      background: #071426;
-      color: #b8c1ce;
-      text-align: center;
-      padding: 25px 15px;
-      font-size: 13px;
-    }
-
-    @media (max-width: 650px) {
-      header {
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      nav a {
-        margin: 0 7px;
-      }
-
-      .hero h1 {
-        font-size: 32px;
-      }
-
-      .hero p {
-        font-size: 17px;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-  <header>
-    <div class="logo">Digital Success Network</div>
-
-    <nav>
-      <a href="#home">Home</a>
-      <a href="#about">About</a>
-      <a href="#business">Business</a>
-      <a href="#contact">Contact</a>
-    </nav>
-  </header>
-
-  <section class="hero" id="home">
-    <h1>Digital Success Network</h1>
-    <p>Team Se Taraqqi Tak</p>
-
-    <div class="buttons">
-      <a href="#" class="btn primary">Create Account</a>
-      <a href="#" class="btn secondary">Login</a>
-    </div>
-  </section>
-
-  <section id="about">
-    <div class="section-title">
-      <h2>Hamare Platform Ke Bare Mein</h2>
-      <p>Ek modern digital business platform</p>
-    </div>
-
-    <div class="cards">
-
-      <div class="card">
-        <h3>Simple Registration</h3>
-        <p>
-          Users online account create kar sakenge aur apna personal
-          dashboard access kar sakenge.
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>Referral System</h3>
-        <p>
-          Har member ko unique referral system diya jayega jisse
-          team activity track ki ja sake.
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>Member Dashboard</h3>
-        <p>
-          Members apni team, points, rank, earnings aur rewards
-          ek hi dashboard mein dekh sakenge.
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>Secure Platform</h3>
-        <p>
-          Account security, verification aur controlled access
-          ko platform ka important hissa rakha jayega.
-        </p>
-      </div>
-
-    </div>
-  </section>
-
-  <section id="business" class="coming">
-    <div class="section-title">
-      <h2>Products & Services</h2>
-      <p>Hamari product range future mein launch ki jayegi.</p>
-    </div>
-
-    <div class="coming-box">
-      <span class="badge">COMING SOON</span>
-
-      <h2>Products & Services</h2>
-
-      <p>
-        Digital Success Network par products aur services
-        future mein introduce ki jayengi.
-      </p>
-
-      <p>
-        Official launch ke waqt complete details platform par
-        available hongi.
-      </p>
-    </div>
-  </section>
-
-  <section>
-    <div class="section-title">
-      <h2>Platform Features</h2>
-      <p>Future platform mein planned features</p>
-    </div>
-
-    <div class="cards">
-
-      <div class="card">
-        <h3>Points & Ranks</h3>
-        <p>Members ke liye points aur achievement-based rank system.</p>
-      </div>
-
-      <div class="card">
-        <h3>Rewards</h3>
-        <p>Eligible members ke liye company-defined rewards system.</p>
-      </div>
-
-      <div class="card">
-        <h3>Team Chart</h3>
-        <p>Team structure aur referral activity ko easily view karne ka option.</p>
-      </div>
-
-      <div class="card">
-        <h3>Spin Wheel</h3>
-        <p>Eligible activity ke basis par company-controlled reward feature.</p>
-      </div>
-
-      <div class="card">
-        <h3>Notifications</h3>
-        <p>Important account aur platform updates members tak pohanchana.</p>
-      </div>
-
-      <div class="card">
-        <h3>Support</h3>
-        <p>Members ke liye support aur communication system.</p>
-      </div>
-
-    </div>
-  </section>
-
-  <section class="cta" id="contact">
-    <h2>Digital Success Network</h2>
-    <p>Team Se Taraqqi Tak</p>
-
-    <div class="buttons" style="margin-top:25px;">
-      <a href="#" class="btn primary">Join Platform</a>
-    </div>
-  </section>
-
-  <footer>
-    <p>© 2026 Digital Success Network. All Rights Reserved.</p>
-    <p>Terms & Conditions | Privacy Policy | Contact</p>
-  </footer>
+</script>
 
 </body>
 </html>
